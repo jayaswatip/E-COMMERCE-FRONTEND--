@@ -1,0 +1,17 @@
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  font-size: 1rem;
+}
+
+.star.filled {
+  color: #f5b32a; /* A nice gold color for filled stars */
+}
+
+.star.empty {
+  color: #d1d5db; /* A light gray for empty stars */
+}

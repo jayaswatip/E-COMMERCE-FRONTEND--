@@ -1,0 +1,320 @@
+/* UserManagement.css - Professional Gray Theme */
+
+:root {
+  --primary-gray: #4b5563;
+  --secondary-gray: #6b7280;
+  --dark-gray: #374151;
+  --light-gray: #9ca3af;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --light-bg: #f9fafb;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+}
+
+/* Main container animations */
+.user-management-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header section */
+.header-title {
+  color: var(--text-dark);
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: -200% center;
+  }
+  50% {
+    background-position: 200% center;
+  }
+}
+
+/* Search input enhancements */
+.search-input {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-input:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+}
+
+.search-input {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus-within {
+  border-color: var(--primary-gray);
+  box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.1);
+}
+
+/* Filter buttons with hover effects */
+.filter-button {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  background: var(--primary-gray);
+  color: white;
+  border-color: var(--primary-gray);
+}
+
+/* User card enhancements */
+.user-card {
+  position: relative;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-gray);
+}
+
+/* Avatar enhancements */
+.user-avatar {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.user-avatar {
+  border-radius: 10px;
+  background: #f3f4f6;
+  border: 2px solid var(--border-color);
+}
+
+/* Role and status badges */
+.role-badge {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.role-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.role-badge:hover::before {
+  left: 100%;
+}
+
+.status-active {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.status-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.role-admin {
+  background: #ede9fe;
+  color: #6b21a8;
+  border: 1px solid #d8b4fe;
+}
+
+.role-user {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+/* Action menu enhancements */
+.action-menu {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.action-menu-item {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-menu-item:hover {
+  background: #f3f4f6;
+}
+
+.action-menu-item:hover {
+  transform: translateX(4px);
+}
+
+/* Pagination enhancements */
+.pagination-button {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pagination-button {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.pagination-button:hover {
+  background: #f3f4f6;
+  border-color: var(--primary-gray);
+}
+
+.pagination-active {
+  background: var(--primary-gray);
+  color: white;
+  border-color: var(--primary-gray);
+}
+
+/* Loading skeleton animations */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Empty state enhancements */
+.empty-state {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.empty-state-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+  .user-card:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+  
+  .search-input:focus-within {
+    transform: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .user-card {
+    background: rgba(31, 41, 55, 0.9);
+    border-color: rgba(75, 85, 99, 0.3);
+  }
+  
+  .action-menu {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(75, 85, 99, 0.3);
+  }
+}
+
+/* Accessibility enhancements */
+.user-card:focus-within {
+  outline: 2px solid var(--primary-indigo);
+  outline-offset: 2px;
+}
+
+.filter-button:focus,
+.pagination-button:focus {
+  outline: 2px solid var(--primary-indigo);
+  outline-offset: 2px;
+}
+
+/* Performance optimizations */
+.user-card,
+.filter-button,
+.pagination-button {
+  will-change: transform;
+}
+
+/* Custom scrollbar */
+.user-management-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.user-management-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.user-management-container::-webkit-scrollbar-thumb {
+  background: var(--primary-gray);
+  border-radius: 4px;
+}
+
+.user-management-container::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-gray);
+}

@@ -26,12 +26,13 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5001';
+  // API Base URL - uses environment variable
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetchDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [API_BASE_URL]);
 
   const fetchDashboardData = async () => {
     try {
@@ -44,10 +45,10 @@ const AdminDashboard = () => {
       }
 
       // Fetch dashboard statistics
-      console.log('Fetching dashboard stats from:', `${API_BASE}/api/dashboard/stats`);
+      console.log('Fetching dashboard stats from:', `${API_BASE_URL}/api/dashboard/stats`);
       console.log('Token:', token ? 'Present' : 'Missing');
       
-      const statsResponse = await fetch(`${API_BASE}/api/dashboard/stats`, {
+      const statsResponse = await fetch(`${API_BASE_URL}/api/dashboard/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -67,7 +68,7 @@ const AdminDashboard = () => {
       setStats(statsData);
 
       // Fetch recent users
-      const usersResponse = await fetch(`${API_BASE}/api/dashboard/recent-users?limit=4`, {
+      const usersResponse = await fetch(`${API_BASE_URL}/api/dashboard/recent-users?limit=4`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -82,7 +83,7 @@ const AdminDashboard = () => {
       setRecentUsers(usersData);
 
       // Fetch recent activity
-      const activityResponse = await fetch(`${API_BASE}/api/dashboard/recent-activity?limit=4`, {
+      const activityResponse = await fetch(`${API_BASE_URL}/api/dashboard/recent-activity?limit=4`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

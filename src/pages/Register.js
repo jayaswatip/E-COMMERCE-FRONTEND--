@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
-import  jwtDecode  from "jwt-decode";
+import jwtDecode from "jwt-decode";
 import './Register.css';
 
 function Register() {
@@ -12,11 +12,16 @@ function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // API Base URL - uses environment variable
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    name: ''
   });
 
   const handleChange = (e) => {
@@ -34,60 +39,126 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    setIsLoading(true);
 
-    const { email, password, confirmPassword } = formData;
+    const { email, password, confirmPassword, name } = formData;
 
     // Validation
     if (!email || !password || !confirmPassword) {
       setFormError('Please fill in all fields');
+      setIsLoading(false);
       return;
     }
 
     if (!validateEmail(email)) {
       setFormError('Please enter a valid email address');
+      setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setFormError('Password must be at least 6 characters long');
+      setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setFormError("Passwords don't match!");
+      setIsLoading(false);
       return;
     }
 
     try {
-      await register(email, password);
+      // Call backend API directly for email registration
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: name || email.split('@')[0],
+          email,
+          password,
+          role: 'user'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Store token and user info
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
       setSuccessMessage('Registration successful! Redirecting to home...');
       setTimeout(() => {
         navigate('/');
+        window.location.reload();
       }, 2000);
     } catch (error) {
       console.error('Registration failed:', error);
       setFormError(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Google Register handler
   const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
+    setFormError('');
+    
     try {
       const decoded = jwtDecode(credentialResponse.credential);
       
-      // Register user with Google account
-      await register(decoded.email, null, { 
-        provider: 'google', 
-        profile: decoded 
+      // Call backend API with Google token
+      const response = await fetch(`${API_BASE_URL}/api/auth/google-register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          idToken: credentialResponse.credential,
+          email: decoded.email,
+          name: decoded.name,
+          googleId: decoded.sub,
+          picture: decoded.picture
+        })
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Google registration failed');
+      }
+
+      // Store token and user info
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
       setSuccessMessage('Registration successful! Redirecting to home...');
       setTimeout(() => {
         navigate('/');
+        window.location.reload();
       }, 2000);
     } catch (err) {
       console.error('Google registration error:', err);
       setFormError(err.message || 'Google signup failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleGoogleError = () => {
+    console.log('Google Signup Failed');
+    setFormError('Google signup failed. Make sure http://localhost:3000 is added to Authorized JavaScript origins in Google Cloud Console.');
   };
 
   return (
@@ -98,6 +169,7 @@ function Register() {
             onClick={() => navigate(-1)} 
             className="back-button"
             title="Go back"
+            disabled={isLoading}
           >
             ← Back
           </button>
@@ -108,19 +180,18 @@ function Register() {
         <div className="auth-form-container">
           <div className="auth-social">
             <div className="google-login-wrapper">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => {
-                  console.log('Google Signup Failed');
-                  setFormError('Google signup failed. Make sure to add http://localhost:3000 to Authorized JavaScript origins in Google Cloud Console.');
-                }}
-                theme="outline"
-                size="large"
-                width="100%"
-                text="signup_with"
-                shape="rectangular"
-                logo_alignment="left"
-              />
+              {!isLoading && (
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text="signup_with"
+                  shape="rectangular"
+                  logo_alignment="left"
+                />
+              )}
             </div>
             <div className="divider">
               <span>or register with email</span>
@@ -133,9 +204,25 @@ function Register() {
           
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
+              <label htmlFor="name">Full Name (Optional)</label>
+              <div className="input-container">
+                <span className="input-icon">👤</span>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <div className="input-container">
-                <span className="input-icon"></span>
+                <span className="input-icon">📧</span>
                 <input
                   type="email"
                   id="email"
@@ -144,6 +231,7 @@ function Register() {
                   onChange={handleChange}
                   placeholder="Enter your email"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -151,15 +239,16 @@ function Register() {
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="input-container">
-                <span className="input-icon"></span>
+                <span className="input-icon">🔒</span>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Create a password"
+                  placeholder="Create a password (min. 6 characters)"
                   required
+                  disabled={isLoading}
                 />
                 <span
                   className="toggle-password"
@@ -174,7 +263,7 @@ function Register() {
             <div className="form-group">
               <label htmlFor="confirmPassword">Confirm Password</label>
               <div className="input-container">
-                <span className="input-icon"></span>
+                <span className="input-icon">🔒</span>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
@@ -183,6 +272,7 @@ function Register() {
                   onChange={handleChange}
                   placeholder="Confirm your password"
                   required
+                  disabled={isLoading}
                 />
                 <span
                   className="toggle-password"
@@ -194,8 +284,8 @@ function Register() {
               </div>
             </div>
 
-            <button type="submit" className="auth-submit">
-              ✨ Create Account
+            <button type="submit" className="auth-submit" disabled={isLoading}>
+              {isLoading ? '⏳ Creating Account...' : '✨ Create Account'}
             </button>
           </form>
 

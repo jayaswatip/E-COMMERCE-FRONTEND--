@@ -37,16 +37,17 @@ const ProductManagement = () => {
     featured: false
   });
 
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5001';
+  // API Base URL - uses environment variable
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('Fetching products from:', `${API_BASE}/api/products`);
+      console.log('Fetching products from:', `${API_BASE_URL}/api/products`);
       console.log('Token:', token ? 'Present' : 'Missing');
       
-      const response = await fetch(`${API_BASE}/api/products`, {
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -73,7 +74,7 @@ const ProductManagement = () => {
       setLoading(false);
       console.log('Loading finished');
     }
-  }, [API_BASE]);
+  }, [API_BASE_URL]);
 
   useEffect(() => {
     fetchProducts();
@@ -85,7 +86,7 @@ const ProductManagement = () => {
     }, 10000);
     
     return () => clearTimeout(timeout);
-  }, [fetchProducts, loading]);
+  }, [fetchProducts, API_BASE_URL]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -154,8 +155,8 @@ const ProductManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const url = editingProduct 
-        ? `${API_BASE}/api/products/${editingProduct._id}`
-        : `${API_BASE}/api/products`;
+        ? `${API_BASE_URL}/api/products/${editingProduct._id}`
+        : `${API_BASE_URL}/api/products`;
       
       const method = editingProduct ? 'PUT' : 'POST';
 
@@ -220,7 +221,7 @@ const ProductManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/products/${productToDelete._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/products/${productToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

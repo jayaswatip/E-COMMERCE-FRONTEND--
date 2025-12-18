@@ -8,7 +8,8 @@ const AdminUsers = () => {
   const [error, setError] = useState('');
   const { user: currentUser } = useAuth();
 
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+  // API Base URL - uses environment variable, falls back to localhost
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -16,7 +17,13 @@ const AdminUsers = () => {
         setLoading(true);
         setError('');
 
-        const response = await fetch(`${API_BASE}/api/users`);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (!response.ok) {
           throw new Error('Failed to fetch users');
@@ -25,7 +32,9 @@ const AdminUsers = () => {
         const data = await response.json();
         
         if (data.success) {
-          setUsers(data.data);
+          setUsers(data.data || data.users || []);
+        } else if (Array.isArray(data)) {
+          setUsers(data);
         } else {
           throw new Error(data.message || 'Failed to fetch users');
         }
@@ -38,14 +47,16 @@ const AdminUsers = () => {
     };
 
     fetchUsers();
-  }, [API_BASE]);
+  }, [API_BASE_URL]);
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ role: newRole })
       });
@@ -56,7 +67,7 @@ const AdminUsers = () => {
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success || data.user) {
         // Update the user in the local state
         setUsers(users.map(user => 
           user._id === userId ? { ...user, role: newRole } : user
@@ -70,79 +81,135 @@ const AdminUsers = () => {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove the user from local state
+        setUsers(users.filter(user => user._id !== userId));
+      } else {
+        throw new Error(data.message || 'Failed to delete user');
+      }
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError(err.message);
+    }
+  };
+
   if (!currentUser || currentUser.role !== 'admin') {
     return (
-      <div className="container mt-5">
+      <div className="admin-container">
         <div className="alert alert-danger">
-          You don't have permission to access this page.
+          ⚠️ You don't have permission to access this page.
         </div>
       </div>
     );
   }
 
   if (loading) {
-    return <div className="loading">Loading users...</div>;
+    return (
+      <div className="admin-container">
+        <div className="loading">
+          <div className="spinner"></div>
+          <p>Loading users...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">Error: {error}</div>;
+    return (
+      <div className="admin-container">
+        <div className="error-alert">❌ Error: {error}</div>
+      </div>
+    );
   }
 
   return (
     <div className="admin-users">
       <div className="admin-header">
-        <h2>Manage Users</h2>
-        <p>View and manage all registered users</p>
+        <h2>👥 Manage Users</h2>
+        <p>View and manage all registered users ({users.length})</p>
       </div>
 
-      <div className="table-responsive">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Joined</th>
-              <th>Last Login</th>
-              <th>Orders</th>
-              <th>Total Spent</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user._id}>
-                <td>{user.name || 'N/A'}</td>
-                <td>{user.email}</td>
-                <td>
-                  <select
-                    value={user.role || 'user'}
-                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                    className="form-select form-select-sm"
-                    disabled={user._id === currentUser._id}
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </td>
-                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
-                <td>{user.totalOrders || 0}</td>
-                <td>₹{(user.totalSpent || 0).toFixed(2)}</td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => {/* Implement delete user */}}
-                    disabled={user.role === 'admin' || user._id === currentUser._id}
-                  >
-                    Delete
-                  </button>
-                </td>
+      {users.length === 0 ? (
+        <div className="no-data">
+          <p>No users found</p>
+        </div>
+      ) : (
+        <div className="table-responsive">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Last Login</th>
+                <th>Orders</th>
+                <th>Total Spent</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user._id}>
+                  <td><strong>{user.name || 'N/A'}</strong></td>
+                  <td>{user.email}</td>
+                  <td>
+                    <select
+                      value={user.role || 'user'}
+                      onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                      className="form-select form-select-sm"
+                      disabled={user._id === currentUser._id}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </td>
+                  <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
+                  <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
+                  <td>{user.totalOrders || 0}</td>
+                  <td>${(user.totalSpent || 0).toFixed(2)}</td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDeleteUser(user._id)}
+                      disabled={user.role === 'admin' || user._id === currentUser._id}
+                      title={user.role === 'admin' ? 'Cannot delete admin' : 'Delete user'}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

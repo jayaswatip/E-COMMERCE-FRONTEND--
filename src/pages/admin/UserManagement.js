@@ -28,13 +28,14 @@ const UserManagement = () => {
   const [actionMenu, setActionMenu] = useState(null);
   const { user: currentUser } = useAuth();
 
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5001';
+  // API Base URL - uses environment variable
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/users`, {
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -53,7 +54,7 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE]);
+  }, [API_BASE_URL]);
 
   useEffect(() => {
     fetchUsers();
@@ -61,7 +62,7 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +117,7 @@ const UserManagement = () => {
                 onClick={async () => {
                   toast.dismiss();
                   try {
-                    const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+                    const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                       method: 'DELETE',
                       headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -155,7 +156,7 @@ const UserManagement = () => {
 
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
-      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

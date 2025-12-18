@@ -15,9 +15,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Use relative URL to leverage the proxy in package.json
-  const API_BASE_URL = '/api';
-
+  // API Base URL - uses environment variable (REACT_APP_API_URL)
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const register = async (email, password, googleData = null) => {
     setLoading(true);
@@ -50,6 +49,7 @@ export const AuthProvider = ({ children }) => {
       
       if (googleData) {
         // Handle Google registration
+        console.log('Registering with Google to:', `${API_BASE_URL}/auth/google-register`);
         response = await fetch(`${API_BASE_URL}/auth/google-register`, {
           method: 'POST',
           headers: {
@@ -64,6 +64,7 @@ export const AuthProvider = ({ children }) => {
         });
       } else {
         // Handle regular email/password registration
+        console.log('Registering with email/password to:', `${API_BASE_URL}/auth/register`);
         response = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: {
@@ -88,6 +89,8 @@ export const AuthProvider = ({ children }) => {
         ...data.user,
         isAdmin: data.user.role === 'admin' || data.user.email === 'admin@example.com'
       };
+
+      console.log('Registration successful:', userWithAdminCheck);
 
       // Store token and user data with admin flag
       localStorage.setItem('token', data.token);
@@ -114,19 +117,13 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return;
     }
-    
-    // Basic validation
-    if (!email || (!password && !googleData)) {
-      setError('Please provide email and password');
-      setLoading(false);
-      return;
-    }
 
     try {
       let response;
       
       if (googleData) {
         // Handle Google login
+        console.log('Logging in with Google to:', `${API_BASE_URL}/auth/google-login`);
         response = await fetch(`${API_BASE_URL}/auth/google-login`, {
           method: 'POST',
           headers: {
@@ -141,6 +138,7 @@ export const AuthProvider = ({ children }) => {
         });
       } else {
         // Handle regular email/password login
+        console.log('Logging in with email/password to:', `${API_BASE_URL}/auth/login`);
         response = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
           headers: {
@@ -162,6 +160,8 @@ export const AuthProvider = ({ children }) => {
         isAdmin: data.user.role === 'admin' || data.user.email === 'admin@example.com'
       };
 
+      console.log('Login successful:', userWithAdminCheck);
+
       // Store token and user data with admin flag
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(userWithAdminCheck));
@@ -178,6 +178,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    console.log('Logging out user');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
@@ -190,17 +191,30 @@ export const AuthProvider = ({ children }) => {
 
   // Check if current user is admin
   const checkIsAdmin = useCallback(() => {
-    return user?.isAdmin === true || user?.role === 'admin';
+    const isAdmin = user?.isAdmin === true || user?.role === 'admin';
+    console.log('Checking admin status:', isAdmin);
+    return isAdmin;
   }, [user]);
 
   useEffect(() => {
     // Check if user is already logged in
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
+    
+    console.log('AuthContext initialization - Token found:', !!token);
+    console.log('AuthContext initialization - User data found:', !!userData);
+    
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
         const isUserAdmin = parsedUser.role === 'admin' || parsedUser.isAdmin === true;
+        
+        console.log('User restored from localStorage:', {
+          email: parsedUser.email,
+          role: parsedUser.role,
+          isAdmin: isUserAdmin
+        });
+        
         setUser({
           ...parsedUser,
           isAdmin: isUserAdmin
@@ -210,8 +224,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else if (token && !userData) {
+      console.warn('Token found but no user data - clearing token');
+      localStorage.removeItem('token');
     }
-  }, [checkIsAdmin]);
+  }, []);
 
   const value = {
     user,

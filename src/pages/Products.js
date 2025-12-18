@@ -9,6 +9,7 @@ import './Products.css';
 function Products() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
   // Fallback products (original hardcoded products)
   const fallbackProducts = [
     {
@@ -145,7 +146,7 @@ function Products() {
     }
   ];
 
-  const [products, setProducts] = useState(fallbackProducts); // Start with fallback products
+  const [products, setProducts] = useState(fallbackProducts);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(['all']);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -154,7 +155,8 @@ function Products() {
   const { addToCart } = useCart();
   const { user, isAdmin } = useAuth();
 
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5001';
+  // API Base URL - uses environment variable
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   // Edit form data
   const [editFormData, setEditFormData] = useState({
@@ -173,7 +175,7 @@ function Products() {
       try {
         setLoading(true);
         
-        const response = await fetch(`${API_BASE}/api/products`, {
+        const response = await fetch(`${API_BASE_URL}/api/products`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -231,7 +233,7 @@ function Products() {
     };
 
     fetchProducts();
-  }, [API_BASE]);
+  }, [API_BASE_URL]);
 
   const filteredProducts = products.filter(product => {
     const matchesCategory =
@@ -246,7 +248,7 @@ function Products() {
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    toast.success(`${product.name} added to cart!`);  // ✅ Toast notification
+    toast.success(`${product.name} added to cart!`);
   };
 
   const handleEditClick = (product) => {
@@ -302,7 +304,7 @@ function Products() {
       };
 
       const productId = editingProduct._id || editingProduct.id;
-      const response = await fetch(`${API_BASE}/api/products/${productId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -322,7 +324,7 @@ function Products() {
       setEditingProduct(null);
       
       // Refresh products list
-      const refreshResponse = await fetch(`${API_BASE}/api/products`, {
+      const refreshResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
